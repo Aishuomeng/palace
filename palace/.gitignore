@@ -1,0 +1,21 @@
+# Node
+app/node_modules/
+node_modules/
+npm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Electron build output
+app/out/
+app/dist/
+
+# OS
+.DS_Store
+*.swp

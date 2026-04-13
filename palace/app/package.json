@@ -1,0 +1,18 @@
+{
+  "name": "claude-palace",
+  "version": "0.1.0",
+  "description": "Claude Code 记忆宫殿",
+  "main": "main.js",
+  "scripts": {
+    "start": "node_modules/electron/dist/Electron.app/Contents/MacOS/Electron .",
+    "dev": "node_modules/electron/dist/Electron.app/Contents/MacOS/Electron . --dev",
+    "rebuild": "npx @electron/rebuild -f -w node-pty -v 30.5.1",
+    "postinstall": "ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ node node_modules/electron/install.js; npx @electron/rebuild -f -w node-pty -v 30.5.1"
+  },
+  "dependencies": {
+    "node-pty": "^1.0.0"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0"
+  }
+}

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8"/>
+<title>Palace</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- ══ BG ORBS ════════════════════════════════════════════ -->
+<div id="bg-orbs" aria-hidden="true">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<!-- ══ INJECT TOAST ════════════════════════════════════════ -->
+<div id="inject-toast" class="hidden"></div>
+
+<!-- ══ CONTEXT MENU ════════════════════════════════════════ -->
+<div id="ctx-menu" class="hidden">
+  <div class="ctx-item" id="ctx-explain">💬 让 Claude 解释</div>
+  <div class="ctx-item" id="ctx-fix">🔧 让 Claude 修复</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" id="ctx-copy">📋 复制选中</div>
+</div>
+
+<!-- ══ SCREEN 1: AUTH ══════════════════════════════════════ -->
+<div id="auth-screen">
+  <div class="screen-center">
+    <div class="brand-logo xl">▌PALACE▐</div>
+    <div class="brand-sub">Claude Code 记忆宫殿</div>
+    <div class="auth-card">
+      <div class="auth-status-row">
+        <span class="auth-dot" id="auth-dot">◉</span>
+        <span id="auth-status-text">检测 Claude 登录状态…</span>
+      </div>
+      <div class="mini-term-wrap">
+        <div class="col-label">── 授权终端</div>
+        <div id="auth-terminal"></div>
+      </div>
+      <div class="row-gap">
+        <button class="action-btn accent-btn grow" id="btn-auth-login">▶ 在终端中登录 Claude</button>
+        <button class="action-btn grow" id="btn-auth-skip">已登录，继续 →</button>
+      </div>
+      <div class="hint-text" id="auth-hint">登录后点击「已登录，继续」</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCREEN 2: PROJECT PICKER ════════════════════════════ -->
+<div id="picker-screen" class="hidden">
+  <div class="picker-topbar">
+    <span class="brand-logo">▌PALACE▐</span>
+    <div style="flex:1"></div>
+    <button class="action-btn" id="btn-picker-back" style="display:none">← 返回</button>
+    <div class="lang-switcher">
+      <button class="lang-btn active" data-lang="zh">中</button>
+      <button class="lang-btn" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="ja">日</button>
+      <button class="lang-btn" data-lang="ko">한</button>
+      <button class="lang-btn" data-lang="de">DE</button>
+      <button class="lang-btn" data-lang="fr">FR</button>
+    </div>
+  </div>
+  <div class="picker-body">
+    <div class="picker-top-row">
+      <div class="picker-heading"><span id="picker-heading">选择项目</span> · <span id="picker-count" class="dim">0 个</span></div>
+      <input id="picker-search" type="text" placeholder="🔍 搜索项目…" autocomplete="off"/>
+    </div>
+    <div id="picker-grid"></div>
+  </div>
+  <div class="picker-footer">
+    <button class="action-btn" id="btn-picker-scan">⌕ 扫描目录</button>
+    <button class="action-btn" id="btn-picker-new">＋ 新建项目</button>
+  </div>
+</div>
+
+<!-- ══ MAIN VIEW ════════════════════════════════════════════ -->
+<div id="topbar" class="hidden">
+  <span class="brand-logo" style="margin-right:8px">▌P▐</span>
+  <div id="tabs"></div>
+  <button class="tab-btn icon-btn" id="btn-new" title="新建项目">＋</button>
+  <button class="tab-btn icon-btn" id="btn-scan" title="扫描目录">⌕</button>
+  <button class="tab-btn icon-btn" id="btn-timeline" title="会话历史">⏱</button>
+  <div style="flex:1;-webkit-app-region:drag"></div>
+  <div class="lang-switcher" style="-webkit-app-region:no-drag">
+    <button class="lang-btn active" data-lang="zh">中</button>
+    <button class="lang-btn" data-lang="en">EN</button>
+    <button class="lang-btn" data-lang="ja">日</button>
+    <button class="lang-btn" data-lang="ko">한</button>
+    <button class="lang-btn" data-lang="de">DE</button>
+    <button class="lang-btn" data-lang="fr">FR</button>
+  </div>
+</div>
+
+<div id="info-panel" class="hidden">
+
+  <!-- project header -->
+  <div id="proj-header">
+    <span class="proj-arrow">▸</span>
+    <span id="proj-name">—</span>
+    <span id="proj-path" title="点击打开文件夹" style="cursor:pointer"></span>
+    <div style="flex:1"></div>
+    <button class="action-btn icon-btn" id="btn-close-proj" title="返回选择器">⊗</button>
+    <button class="action-btn icon-btn" id="btn-change-proj" title="切换项目">⇄</button>
+    <button class="action-btn save-btn compact" id="btn-save">保存<span id="dirty-dot" class="hidden"> ●</span></button>
+    <button class="action-btn launch-btn compact" id="btn-launch">▶ 启动 Claude</button>
+  </div>
+
+  <!-- fields + memory side by side -->
+  <div id="info-body">
+
+    <!-- LEFT: key fields -->
+    <div id="fields-col">
+      <div class="col-label">
+        ── 关键信息
+        <span class="dim">AI 读取</span>
+        <span id="analyze-status" class="analyze-badge hidden">🤖 分析中…</span>
+      </div>
+      <div id="fields-list"></div>
+      <div class="fields-actions-row">
+        <button class="action-btn field-add-btn" id="btn-add-field">＋ 字段</button>
+        <button class="action-btn ai-btn" id="btn-ai-local" title="本地扫描">⚡ 扫描</button>
+        <button class="action-btn ai-btn" id="btn-ai-analyze" title="AI深度分析">🤖 AI分析</button>
+      </div>
+    </div>
+
+    <!-- RIGHT: memory -->
+    <div id="memory-col">
+      <div class="col-label">── 记忆 <span class="dim">注入 CLAUDE.md</span></div>
+      <textarea id="memory-area" spellcheck="false" placeholder="Claude 的项目上下文、规则、当前状态…"></textarea>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- terminal -->
+<div id="term-panel" class="hidden">
+  <div class="col-label">── 终端</div>
+  <div id="terminal"></div>
+</div>
+
+<!-- ══ MODAL: ADD PROJECT ═══════════════════════════════════ -->
+<div id="modal-overlay" class="hidden">
+  <div id="modal">
+    <div class="modal-title" id="modal-title">┌─ 新建项目 ──────────────────┐</div>
+    <label id="modal-label-name">名称</label>
+    <input id="modal-name" type="text" placeholder="my-project"/>
+    <label id="modal-label-path">路径</label>
+    <div class="path-row">
+      <input id="modal-path" type="text" placeholder="/path/to/project"/>
+      <button class="action-btn" id="btn-browse">📁</button>
+    </div>
+    <div class="modal-btns">
+      <button class="action-btn accent-btn" id="modal-ok">[ 确认 ]</button>
+      <button class="action-btn" id="modal-cancel">[ 取消 ]</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: SCAN ══════════════════════════════════════════ -->
+<div id="scan-overlay" class="hidden">
+  <div id="scan-modal">
+    <div class="modal-title" id="scan-modal-title">┌─ 扫描项目目录 ──────────────────┐</div>
+    <label id="scan-label-dir">目录</label>
+    <div class="path-row">
+      <input id="scan-dir" type="text" placeholder="/Users/yourname"/>
+      <button class="action-btn" id="btn-scan-browse">📁</button>
+      <button class="action-btn accent-btn" id="btn-scan-run">[ 扫描 ]</button>
+    </div>
+    <label style="margin-top:8px" id="scan-label-results">发现的项目</label>
+    <div id="scan-results"></div>
+    <div class="modal-btns">
+      <button class="action-btn" id="btn-scan-all">全选</button>
+      <button class="action-btn launch-btn" id="btn-scan-import">[ 导入选中 ]</button>
+      <div style="flex:1"></div>
+      <button class="action-btn" id="btn-scan-cancel">[ 关闭 ]</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TIMELINE PANEL ══════════════════════════════════════ -->
+<div id="timeline-panel" class="hidden">
+  <div id="timeline-header">
+    <span class="col-label" style="gap:6px">⏱ 会话历史 <span id="timeline-proj-name" class="dim"></span></span>
+    <button class="action-btn icon-btn" id="btn-timeline-close">✕</button>
+  </div>
+  <div id="timeline-list"></div>
+</div>
+
+<!-- ══ CONFIRM DIALOG ══════════════════════════════════════ -->
+<div id="confirm-overlay" class="hidden">
+  <div id="confirm-modal">
+    <div class="modal-title">┌─ 确认 ──────────────────────────┐</div>
+    <div id="confirm-msg" style="color:var(--text);font-size:12px;padding:4px 0"></div>
+    <div class="modal-btns" style="margin-top:12px">
+      <button class="action-btn danger-btn" id="confirm-ok">[ 确认删除 ]</button>
+      <button class="action-btn" id="confirm-cancel">[ 取消 ]</button>
+    </div>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

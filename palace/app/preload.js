@@ -1,0 +1,25 @@
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('palace', {
+  loadProjects:         ()            => ipcRenderer.invoke('load-projects'),
+  saveProject:          (data)        => ipcRenderer.invoke('save-project', data),
+  deleteProject:        (id)          => ipcRenderer.invoke('delete-project', id),
+  loadMemory:           (id)          => ipcRenderer.invoke('load-memory', id),
+  saveMemory:           (id, content) => ipcRenderer.invoke('save-memory', id, content),
+  launchClaude:         (project)     => ipcRenderer.invoke('launch-claude', project),
+  createPty:            (cwd)         => ipcRenderer.invoke('create-pty', cwd),
+  sendInput:            (data)        => ipcRenderer.send('pty-input', data),
+  sendResize:           (cols, rows)  => ipcRenderer.send('pty-resize', cols, rows),
+  onPtyData:            (cb)          => ipcRenderer.on('pty-data', (_, d) => cb(d)),
+  onPtyExit:            (cb)          => ipcRenderer.on('pty-exit', () => cb()),
+  checkClaudeAuth:      ()            => ipcRenderer.invoke('check-claude-auth'),
+  selectDirectory:      ()            => ipcRenderer.invoke('select-directory'),
+  scanProjects:         (dir)         => ipcRenderer.invoke('scan-projects', dir),
+  analyzeProjectLocal:  (path)        => ipcRenderer.invoke('analyze-project-local', path),
+  analyzeProjectAI:     (path)        => ipcRenderer.invoke('analyze-project-ai', path),
+  openInFinder:         (path)        => ipcRenderer.invoke('open-in-finder', path),
+  copyToClipboard:      (text)        => ipcRenderer.invoke('copy-to-clipboard', text),
+  saveCheckpoint:       (id, data)    => ipcRenderer.invoke('save-checkpoint', id, data),
+  loadCheckpoints:      (id)          => ipcRenderer.invoke('load-checkpoints', id),
+  onMemoryInjected:     (cb)          => ipcRenderer.on('memory-injected', (_, d) => cb(d)),
+});

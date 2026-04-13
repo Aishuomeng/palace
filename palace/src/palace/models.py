@@ -18,6 +18,7 @@ class Project:
     path: Path
     last_active: datetime | None = None
     description: str = ""
+    fields: dict[str, str] = field(default_factory=dict)
 
     @property
     def id(self) -> str:
@@ -45,12 +46,12 @@ class Project:
             "path": str(self.path),
             "last_active": self.last_active.isoformat() if self.last_active else None,
             "description": self.description,
+            "fields": self.fields,
         }
         self.meta_path.write_text(json.dumps(data, indent=2, ensure_ascii=False))
 
     @classmethod
     def load_all(cls) -> list[Project]:
-        """Load all saved projects from palace dir."""
         projects = []
         if not PALACE_DIR.exists():
             return projects
@@ -62,6 +63,7 @@ class Project:
                     path=Path(data["path"]),
                     last_active=datetime.fromisoformat(data["last_active"]) if data.get("last_active") else None,
                     description=data.get("description", ""),
+                    fields=data.get("fields", {}),
                 )
                 projects.append(p)
             except Exception:
