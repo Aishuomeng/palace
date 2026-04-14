@@ -113,10 +113,10 @@ function createPty(cwd) {
     env: process.env,
   });
   ptyProcess.onData(data => {
-    mainWindow?.webContents.send('pty-data', data);
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('pty-data', data);
   });
   ptyProcess.onExit(() => {
-    mainWindow?.webContents.send('pty-exit');
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('pty-exit');
   });
 }
 
